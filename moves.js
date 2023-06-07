@@ -34,6 +34,8 @@ export class Move {
   use() {
     if (this.isUsable()) {
       this.currentUsage--;
+    } else {
+      return null;
     }
   }
 }
@@ -150,13 +152,13 @@ const moves = {
     type: "Fire",
     power: 25,
     maxUsage: 5,
-    targets: [Targets.Enemies],
+    targets: [Targets.Enemy, Targets.Enemies],
   }),
 
   burn: new Move({
     name: "Burn",
     type: "Fire",
-    power: 30,
+    power: -25,
     maxUsage: 3,
     affectsOffense: true,
     affectsHp: false,

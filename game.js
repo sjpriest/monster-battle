@@ -23,7 +23,7 @@ const {
 } = moves;
 
 class Monster {
-  constructor(name, type, maxHp, moves, defense = 0) {
+  constructor(name, type, maxHp, offense, defense, moves) {
     this.name = name;
     this.type = type;
     this.maxHp = maxHp;
@@ -31,14 +31,17 @@ class Monster {
     this.moves = moves;
     this.fainted = false;
     this.defense = defense;
+    this.offense = offense;
   }
 
   isFainted() {
     return this.currentHp <= 0;
   }
 
-  takeDamage(damage) {
-    this.currentHp -= damage - this.defense;
+  takeDamage(damage, attackingMonster) {
+    let damageTaken = damage - this.defense + attackingMonster.offense;
+    this.currentHp -= damageTaken;
+    return damageTaken;
   }
 }
 
@@ -72,9 +75,22 @@ class Player {
 }
 
 class Item {
-  constructor(name, effect) {
+  constructor(name, effect, number) {
     this.name = name;
     this.effect = effect;
+    this.number = number;
+  }
+
+  isRemaining() {
+    return this.number > 0;
+  }
+
+  use() {
+    if (this.isRemaining()) {
+      this.number--;
+    } else {
+      return null;
+    }
   }
 }
 
@@ -109,20 +125,51 @@ class Battle {
   handleMove(move) {
     let activeMonster = this.opponent.currentMonster;
     let attackingMonster = this.currentTurn.currentMonster;
+    console.log(`${attackingMonster.name} used ${move.name}!`);
     if (move.targets.includes(Targets.Self)) {
+      if (move.affectsOffense) {
+        attackingMonster.offense += move.power;
+        console.log(`${attackingMonster.name}'s offense is increased by ${move.power}!`);
+      }
+      if (move.affectsDefense) {
+        attackingMonster.defense += move.power;
+        console.log(`${attackingMonster.name}'s defense is increased by ${move.power}!`);
+      }
+      if (move.affectsHp) {
+        if (attackingMonster.currentHp + move.power > monster.maxHp) {
+          attackingMonster.currentHp = monster.maxHp;
+        } else {
+          attackingMonster.currentHp += move.power;
+        }
+        if (this.currentTurn === this.player1) {
+          updateHpBar("player1", monster.currentHp, monster.maxHp);
+        } else {
+          updateHpBar("player2", monster.currentHp, monster.maxHp);
+        }
+        console.log(
+          `${attackingMonster.name} gained ${move.power} hit points and now has ${attackingMonster.currentHp} hit points!`
+        );
+      }
     }
     if (move.targets.includes(Targets.Allies)) {
     }
     if (move.targets.includes(Targets.Enemy)) {
+      if (move.affectsOffense) {
+        activeMonster.offense += move.power;
+        console.log(`${activeMonster.name}'s offense is reduced by ${move.power}!`);
+      }
+      if (move.affectsDefense) {
+        activeMonster.defense += move.power;
+        console.log(`${activeMonster.name}'s defense is reduced by ${move.power}!`);
+      }
       if (move.affectsHp) {
-        activeMonster.takeDamage(move.power);
+        let damageTaken = activeMonster.takeDamage(move.power, attackingMonster);
         if (this.currentTurn === this.player1) {
           updateHpBar("player2", activeMonster.currentHp, activeMonster.maxHp);
         } else {
           updateHpBar("player1", activeMonster.currentHp, activeMonster.maxHp);
         }
-        console.log(`${attackingMonster.name} used ${move.name}!`);
-        console.log(`${activeMonster.name} took ${move.power} damage!`);
+        console.log(`${activeMonster.name} took ${damageTaken} damage!`);
         if (activeMonster.isFainted()) {
           console.log(`${activeMonster.name} fainted!`);
           activeMonster.fainted = true;
@@ -223,10 +270,10 @@ class Battle {
   run() {
     if (!this.isBattleOver()) {
       console.log(
-        `Player 1's ${this.player1.currentMonster.name} HP: ${this.player1.currentMonster.currentHp}/${this.player1.currentMonster.maxHp}`
+        `Player 1's ${this.player1.currentMonster.name} HP: ${this.player1.currentMonster.currentHp}/${this.player1.currentMonster.maxHp} Offense: ${this.player1.currentMonster.offense} Defense: ${this.player1.currentMonster.defense}`
       );
       console.log(
-        `Player 2's ${this.player2.currentMonster.name} HP: ${this.player2.currentMonster.currentHp}/${this.player2.currentMonster.maxHp}`
+        `Player 2's ${this.player2.currentMonster.name} HP: ${this.player2.currentMonster.currentHp}/${this.player2.currentMonster.maxHp} Offense: ${this.player2.currentMonster.offense} Defense: ${this.player2.currentMonster.defense}`
       );
       showMainMenu();
     } else {
@@ -275,9 +322,14 @@ function showAttackMenu() {
   // For each attack, create a button, add the onclick, and append it to the menu
   attacks.forEach((attack) => {
     let attackButton = document.createElement("button");
-    attackButton.innerText = attack.name;
+    attackButton.innerText = `${attack.name}, ${attack.currentUsage}/${attack.maxUsage}`;
     attackButton.onclick = function () {
-      handleAttack(attack);
+      if (attack.isUsable()) {
+        attack.use();
+        handleAttack(attack);
+      } else {
+        console.log("You can't use that move anymore!");
+      }
     };
     attackMenu.appendChild(attackButton);
   });
@@ -339,9 +391,14 @@ function showItemMenu() {
   itemMenu.innerHTML = "";
   itemOptions.forEach((option) => {
     let itemButton = document.createElement("button");
-    itemButton.innerText = option.name;
+    itemButton.innerText = `${option.name}, ${option.number}`;
     itemButton.onclick = function () {
-      showItemEffectMenu(option);
+      if (option.isRemaining()) {
+        option.use();
+        showItemEffectMenu(option);
+      } else {
+        console.log("You don't have anymore of that item!");
+      }
     };
     itemMenu.appendChild(itemButton);
   });
@@ -463,41 +520,41 @@ let winner = null;
 
 function main() {
   // Let's create some monsters
-  let bulbadon = new Monster("Bulbadon", "Grass", 200, [
-    tackle,
+  let bulbadon = new Monster("Bulbadon", "Grass", 200, 50, 50, [
+    intimidate,
     vineWhip,
     tranquility,
   ]);
-  let charagon = new Monster("Charagon", "Fire", 250, [
+  let charagon = new Monster("Charagon", "Fire", 250, 75, 25, [
     flameThrower,
     incinerate,
     hardenedShell,
   ]);
-  let houndini = new Monster("Houndini", "Psychic", 200, [
+  let houndini = new Monster("Houndini", "Psychic", 200, 50, 50, [
     bite,
     escapeArtist,
     cerberusMaul,
   ]);
-  let terraptor = new Monster("Terraptor", "Earth", 300, [
+  let terraptor = new Monster("Terraptor", "Earth", 300, 75, 50, [
     sliceAndDice,
     earthquake,
     hardenedShell,
   ]);
-  let falcocean = new Monster("Falcocean", "Water", 150, [
+  let falcocean = new Monster("Falcocean", "Water", 150, 100, 25, [
     waterCannon,
     clawsOfFury,
     evade,
   ]);
-  let quartzion = new Monster("Quartzion", "Rock", 200, [
+  let quartzion = new Monster("Quartzion", "Rock", 200, 50, 125, [
     avalanche,
     sliceAndDice,
     terrorize,
   ]);
 
   // And items
-  let potion = new Item("Potion", 100);
-  let superPotion = new Item("Super Potion", 250);
-  let smellingSalts = new Item("Smelling Salts", 0);
+  let potion = new Item("Potion", 100, 5);
+  let superPotion = new Item("Super Potion", 250, 3);
+  let smellingSalts = new Item("Smelling Salts", 0, 2);
 
   // And players
   let player1 = new Player(
