@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monster Battle</title>
+    <style>
+        .hp-bar {
+          position: absolute;
+          width: 84.5%; 
+          background-color: #f3f3f3; 
+          border: solid 1px #e7e7e7; 
+        }
+        .hp-bar div {
+          height: 30px; 
+          background-color: #009578; 
+          text-align: right;
+          line-height: 30px; 
+          color: white; 
+          font-size: 12px; 
+          width: 100%;
+        }
+        #hp-bar-player1 {
+            top: 19px;
+            left: 16px;
+        }
+        #hp-bar-player2 {
+            top: 19px;
+            left: 97px;
+        }
+        progress[value]::-webkit-progress-bar {
+            background-color: #eee;
+        }
+        progress[value]::-webkit-progress-value {
+            background-color: #f00;
+        }
+        progress[value]::-moz-progress-bar {
+            background-color: #f00;
+        }
+        body {
+            background-color: black;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .battle-container {
+            width: 800px;
+            height: 600px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            margin: auto;
+            position: relative;
+            border: 1px gold;
+            box-shadow: 0px 0px 10px 2px rgba(0,0,0,0.1), 0px 0px 20px 5px rgba(255,215,0, 0.6);
+        }
+        .battle-log {
+            position: absolute;
+            bottom: 140px;
+        }
+        .player {
+            position: absolute;
+            bottom: 170px;
+            width: 400px;
+            height: 400px;
+        }
+        .player .monster-img {
+            position: relative;
+            width: 75%;
+            top: 45px;
+            left: 45px;
+        }
+        .player .profile-img {
+            width: 100%;
+        }
+        .player1 {
+            left: 30px;
+        }
+        .player2 {
+            right: 30px;
+        }
+        .profile1 {
+            left: 75px;
+            bottom: 35px;
+            width: 90px;
+            height: 100px;
+        }
+        .profile2 {
+            right: 52px;
+            bottom: 35px;
+            width: 90px;
+            height: 100px;
+        }
+        .actions {
+            position: absolute;
+            bottom: 10px;
+            text-align: center;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            justify-content: end;
+            gap: 10px;
+            width: 50%;
+            z-index: 3
+        }
+        .actions button {
+            padding: 10px;
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            transition-duration: 0.4s;
+        }
+        .actions button:hover {
+            background-color: white; 
+            color: black;
+            border: 2px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div class="battle-container">
+            <img id="interface" src="Interface2.png" alt="Overall interface" style="z-index:1">
+            <div class="player player1">
+                <div class=hp-bar>
+                    <progress class="hp-bar" id="hp-bar-player1" max="100" value="100" style="z-index:999"></progress>
+                </div>
+                <img id="player1-monster" class="monster-img" src="Bulbadon.png" alt="Player 1's Monster" style="z-index:0">
+                <p id="player1-monster-name" style="text-align:center; font-size:18px; top:16%; right:3%; margin:0px; position:relative; z-index:999">Bulbadon</p>
+            </div>
+            <div class="player player2">
+                <div class=hp-bar>
+                    <progress class="hp-bar" id="hp-bar-player2" max="100" value="100" style="z-index:999"></progress>
+                </div>
+                <img id="player2-monster" class="monster-img" src="Charagon.png" alt="Player 2's Monster" style="z-index:0">
+                <p id="player2-monster-name" style="text-align:center; font-size:18px; margin:0px; top:16%; left:5%; position:relative; z-index:999">Charagon</p>
+            </div>
+            <div class="player profile1">
+                <p id="player1-name" style="font-size:18px; font-weight:bold; color:navy; text-align:center; position:relative; margin: 0px; z-index:2">AKI</p>
+                <img src="Aki.png" class="profile-img" alt="Player 1's profile">
+            </div>
+            <div class="player profile2">
+                <p id="player2-name" style="font-size:18px; font-weight:bold; color:#560319; text-align:center; position:relative; margin: 0px; z-index:2">VINCENT</p>
+                <img src="Vincent.png" class="profile-img" alt="Player 2's profile">
+            </div>
+            <div class="actions" id="main-menu">
+                <button id="attack-button">Attack</button>
+                <button id="switch-button">Switch</button>
+                <button id="item-button">Item</button>
+                <button id="flee-button">Flee</button>
+            </div>
+
+            <div class="actions" id="attack-menu" style="display: none;">
+                <!-- Attack options go here -->
+            </div>
+
+            <div class="actions" id="switch-menu" style="display: none;">
+                <!-- Switch options go here -->
+            </div>
+
+            <div class="actions" id="item-menu" style="display: none;">
+                <!-- Item options go here -->
+            </div>
+
+            <p id="battle-log" class="battle-log">Battle actions will be logged here</p>
+        </div>
+    </div>
+    <script type="module" src="game.js"></script>
+</body>
+</html>
