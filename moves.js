@@ -1,3 +1,10 @@
+export const Targets = {
+  Self: "self",
+  Enemy: "enemy",
+  Allies: "allies",
+  Enemies: "enemies",
+};
+
 export class Move {
   constructor({
     name,
@@ -5,26 +12,22 @@ export class Move {
     power,
     affectsDefense = null,
     affectsOffense = null,
-    affectsSelf = null,
-    affectsEnemy = null,
-    allEnemies = null,
-    allAllies = null,
-    maxUsage
+    affectsHp = true,
+    targets,
+    maxUsage,
   }) {
     this.name = name;
     this.type = type;
     this.power = power;
     this.affectsDefense = affectsDefense;
     this.affectsOffense = affectsOffense;
-    this.affectsSelf = affectsSelf;
-    this.affectsEnemy = affectsEnemy;
-    this.allEnemies = allEnemies;
-    this.allAllies = allAllies;
+    this.affectsHp = affectsHp;
+    this.targets = targets;
     this.maxUsage = maxUsage;
     this.currentUsage = maxUsage;
   }
 
-    isUsable() {
+  isUsable() {
     return this.currentUsage > 0;
   }
 
@@ -33,21 +36,23 @@ export class Move {
       this.currentUsage--;
     }
   }
-};
+}
 
 const moves = {
   tackle: new Move({
-    name: "Tackle", 
-    type: "Normal", 
-    power: 50, 
-    maxUsage: 10
+    name: "Tackle",
+    type: "Normal",
+    targets: [Targets.Enemy],
+    power: 50,
+    maxUsage: 10,
   }),
 
   vineWhip: new Move({
     name: "Vine Whip",
     type: "Grass",
+    targets: [Targets.Enemy],
     power: 100,
-    maxUsage: 3
+    maxUsage: 3,
   }),
 
   intimidate: new Move({
@@ -56,16 +61,17 @@ const moves = {
     power: -25,
     maxUsage: 5,
     affectsDefense: true,
-    affectsEnemy: true,
+    affectsHp: false,
+    targets: [Targets.Enemy],
   }),
 
   tranquility: new Move({
     name: "Tranquility",
     type: "Grass",
     power: -100,
+    affectsHp: true,
     maxUsage: 2,
-    affectsSelf: true,
-    allAllies: true
+    targets: [Targets.Self, Targets.Allies],
   }),
 
   escapeArtist: new Move({
@@ -74,7 +80,8 @@ const moves = {
     power: 50,
     maxUsage: 2,
     affectsDefense: true,
-    affectsSelf: true
+    affectsHp: false,
+    targets: [Targets.Self],
   }),
 
   psychicBark: new Move({
@@ -83,21 +90,24 @@ const moves = {
     power: 30,
     maxUsage: 5,
     affectsDefense: true,
-    affectsEnemy: true
+    affectsHp: false,
+    targets: [Targets.Enemy],
   }),
 
   bite: new Move({
     name: "Bite",
     type: "Normal",
     power: 50,
-    maxUsage: 10
+    maxUsage: 10,
+    targets: [Targets.Enemy],
   }),
 
   cerberusMaul: new Move({
     name: "Cerberus' Maul",
     type: "Psychic",
     power: 150,
-    maxUsage: 2
+    maxUsage: 2,
+    targets: [Targets.Enemy],
   }),
 
   earthquake: new Move({
@@ -105,14 +115,15 @@ const moves = {
     type: "Ground",
     power: 50,
     maxUsage: 2,
-    allEnemies: true
+    targets: [Targets.Enemies],
   }),
 
   sliceAndDice: new Move({
     name: "Slice and Dice",
     type: "Normal",
     power: 75,
-    maxUsage: 5
+    maxUsage: 5,
+    targets: [Targets.Enemy],
   }),
 
   hardenedShell: new Move({
@@ -121,14 +132,17 @@ const moves = {
     power: 50,
     maxUsage: 3,
     affectsDefense: true,
-    affectsSelf: true
+    affectsHp: false,
+    affectsSelf: true,
+    targets: [Targets.Self],
   }),
 
   flameThrower: new Move({
-    name: "Flame Thrower", 
-    type: "Fire", 
-    power: 100, 
-    maxUsage: 3
+    name: "Flame Thrower",
+    type: "Fire",
+    power: 100,
+    maxUsage: 3,
+    targets: [Targets.Enemy],
   }),
 
   incinerate: new Move({
@@ -136,7 +150,7 @@ const moves = {
     type: "Fire",
     power: 25,
     maxUsage: 5,
-    allEnemies: true
+    targets: [Targets.Enemies],
   }),
 
   burn: new Move({
@@ -145,21 +159,24 @@ const moves = {
     power: 30,
     maxUsage: 3,
     affectsOffense: true,
-    affectsEnemy: true
+    affectsHp: false,
+    targets: [Targets.Enemy],
   }),
 
   waterCannon: new Move({
     name: "Water Cannon",
     type: "Water",
     power: 100,
-    maxUsage: 3
+    maxUsage: 3,
+    targets: [Targets.Enemy],
   }),
 
   clawsOfFury: new Move({
     name: "Claws of Fury",
     type: "Normal",
     power: 150,
-    maxUsage: 2
+    maxUsage: 2,
+    targets: [Targets.Enemy],
   }),
 
   evade: new Move({
@@ -168,8 +185,8 @@ const moves = {
     power: 25,
     maxUsage: 2,
     affectsDefense: true,
-    affectsSelf: true,
-    allAllies: true
+    affectsHp: false,
+    targets: [Targets.Self, Targets.Allies],
   }),
 
   terrorize: new Move({
@@ -178,16 +195,17 @@ const moves = {
     power: 40,
     maxUsage: 2,
     affectsDefense: true,
-    affectsEnemy: true,
-    allEnemies: true
+    affectsHp: false,
+    targets: [Targets.Enemy, Targets.Enemies],
   }),
 
   avalanche: new Move({
     name: "Avalance",
     type: "Rock",
     power: 100,
-    maxUsage: 3
-  })
+    maxUsage: 3,
+    targets: [Targets.Enemy],
+  }),
 };
 
 export default moves;
