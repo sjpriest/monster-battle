@@ -5,7 +5,7 @@
     <style>
         .hp-bar {
           position: absolute;
-          width: 84.5%; 
+          width: 83%; 
           background-color: #f3f3f3; 
           border: solid 1px #e7e7e7; 
         }
@@ -19,12 +19,12 @@
           width: 100%;
         }
         #hp-bar-player1 {
-            top: 19px;
-            left: 16px;
+            top: 21px;
+            left: 34px;
         }
         #hp-bar-player2 {
-            top: 19px;
-            left: 97px;
+            top: 21px;
+            left: 91px;
         }
         progress[value]::-webkit-progress-bar {
             background-color: #eee;
@@ -45,8 +45,8 @@
             min-height: 100vh;
         }
         .battle-container {
-            width: 800px;
-            height: 600px;
+            width: 768px;
+            height: 696px;
             background-color: white;
             display: flex;
             justify-content: center;
@@ -57,11 +57,25 @@
         }
         .battle-log {
             position: absolute;
-            bottom: 140px;
+            bottom: 35px;
+            width: 600px;
+            margin: 0px;
+        }
+        #battle-log1 {
+            height: 18px;
+        }
+        #battle-log2 {
+            height: 38px;
+        }
+        #battle-log3 {
+            height: 58px;
+        }
+        #battle-log4 {
+            height: 78px;
         }
         .player {
             position: absolute;
-            bottom: 170px;
+            bottom: 270px;
             width: 400px;
             height: 400px;
         }
@@ -75,26 +89,26 @@
             width: 100%;
         }
         .player1 {
-            left: 30px;
+            left: 10px;
         }
         .player2 {
-            right: 30px;
+            right: 10px;
         }
         .profile1 {
-            left: 75px;
-            bottom: 35px;
+            left: 70px;
+            bottom: 150px;
             width: 90px;
             height: 100px;
         }
         .profile2 {
-            right: 52px;
-            bottom: 35px;
+            right: 50px;
+            bottom: 150px;
             width: 90px;
             height: 100px;
         }
         .actions {
             position: absolute;
-            bottom: 10px;
+            bottom: 140px;
             text-align: center;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -126,20 +140,20 @@
 <body>
     <div id="game">
         <div class="battle-container">
-            <img id="interface" src="Interface2.png" alt="Overall interface" style="z-index:1">
+            <img id="interface" src="InterfaceWLogs.png" alt="Overall interface" style="z-index:1">
             <div class="player player1">
                 <div class=hp-bar>
                     <progress class="hp-bar" id="hp-bar-player1" max="100" value="100" style="z-index:999"></progress>
                 </div>
                 <img id="player1-monster" class="monster-img" src="Bulbadon.png" alt="Player 1's Monster" style="z-index:0">
-                <p id="player1-monster-name" style="text-align:center; font-size:18px; top:16%; right:3%; margin:0px; position:relative; z-index:999">Bulbadon</p>
+                <p id="player1-monster-name" style="text-align:center; font-size:18px; top:13%; right:1%; margin:0px; position:relative; z-index:999">Bulbadon</p>
             </div>
             <div class="player player2">
                 <div class=hp-bar>
                     <progress class="hp-bar" id="hp-bar-player2" max="100" value="100" style="z-index:999"></progress>
                 </div>
                 <img id="player2-monster" class="monster-img" src="Charagon.png" alt="Player 2's Monster" style="z-index:0">
-                <p id="player2-monster-name" style="text-align:center; font-size:18px; margin:0px; top:16%; left:5%; position:relative; z-index:999">Charagon</p>
+                <p id="player2-monster-name" style="text-align:center; font-size:18px; margin:0px; top:13%; left:3%; position:relative; z-index:999">Charagon</p>
             </div>
             <div class="player profile1">
                 <p id="player1-name" style="font-size:18px; font-weight:bold; color:navy; text-align:center; position:relative; margin: 0px; z-index:2">AKI</p>
@@ -168,7 +182,10 @@
                 <!-- Item options go here -->
             </div>
 
-            <p id="battle-log" class="battle-log">Battle actions will be logged here</p>
+            <p id="battle-log1" class="battle-log" style="z-index:999"></p>
+            <p id="battle-log2" class="battle-log" style="z-index:999"></p>
+            <p id="battle-log3" class="battle-log" style="z-index:999"></p>
+            <p id="battle-log4" class="battle-log" style="z-index:999"></p>
         </div>
     </div>
     <script type="module" src="game.js"></script>

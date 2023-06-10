@@ -194,7 +194,7 @@ const moves = {
   terrorize: new Move({
     name: "Terrorize",
     type: "Normal",
-    power: 40,
+    power: -40,
     maxUsage: 2,
     affectsDefense: true,
     affectsHp: false,
@@ -202,7 +202,7 @@ const moves = {
   }),
 
   avalanche: new Move({
-    name: "Avalance",
+    name: "Avalanche",
     type: "Rock",
     power: 100,
     maxUsage: 3,

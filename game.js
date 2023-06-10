@@ -39,10 +39,9 @@ class Monster {
   }
 
   takeDamage(damage, attackingMonster) {
+    let damageTaken = 0;
     if (damage - this.defense + attackingMonster.offense > 0) {
-      let damageTaken = damage - this.defense + attackingMonster.offense;
-    } else {
-      let damageTaken = 0;
+      damageTaken = damage - this.defense + attackingMonster.offense;
     }
     this.currentHp -= damageTaken;
     return damageTaken;
@@ -70,10 +69,10 @@ class Player {
 
   switchMonster(newMonster) {
     if (newMonster.fainted) {
-      console.log("You can't switch to a fainted monster!");
+      displayMessage("You can't switch to a fainted monster.");
     } else {
       this.currentMonster = newMonster;
-      console.log(`Go, ${newMonster.name}!`);
+      displayMessage(`Go, ${newMonster.name}!`);
     }
   }
 }
@@ -129,15 +128,15 @@ class Battle {
   handleMove(move) {
     let activeMonster = this.opponent.currentMonster;
     let attackingMonster = this.currentTurn.currentMonster;
-    console.log(`${attackingMonster.name} used ${move.name}!`);
+    displayMessage(`${attackingMonster.name} used ${move.name}.`);
     if (move.targets.includes(Targets.Self)) {
       if (move.affectsOffense) {
         attackingMonster.offense += move.power;
-        console.log(`${attackingMonster.name}'s offense is increased by ${move.power}!`);
+        displayMessage(`${attackingMonster.name}'s offense is increased by ${move.power}!`);
       }
       if (move.affectsDefense) {
         attackingMonster.defense += move.power;
-        console.log(`${attackingMonster.name}'s defense is increased by ${move.power}!`);
+        displayMessage(`${attackingMonster.name}'s defense is increased by ${move.power}!`);
       }
       if (move.affectsHp) {
         if (attackingMonster.currentHp + move.power > monster.maxHp) {
@@ -150,7 +149,7 @@ class Battle {
         } else {
           updateHpBar("player2", monster.currentHp, monster.maxHp);
         }
-        console.log(
+        displayMessage(
           `${attackingMonster.name} gained ${move.power} hit points and now has ${attackingMonster.currentHp} hit points!`
         );
       }
@@ -160,13 +159,13 @@ class Battle {
         this.currentTurn.monsters.forEach((monster) => {
           monster.offense += move.power;
         })
-        console.log(`All of ${this.currentTurn.name}'s monsters had their offense increased by ${move.power}!`);
+        displayMessage(`All of ${this.currentTurn.name}'s monsters had their offense increased by ${move.power}!`);
       }
       if (move.affectsDefense) {
         this.currentTurn.monsters.forEach((monster) => {
           monster.defense += move.power;
         })
-        console.log(`All of ${this.currentTurn.name}'s monsters had their defense increased by ${move.power}!`);
+        displayMessage(`All of ${this.currentTurn.name}'s monsters had their defense increased by ${move.power}!`);
       }
       if (move.affectsHp) {
         this.currentTurn.monsters.forEach((monster) => {
@@ -185,17 +184,17 @@ class Battle {
           updateHpBar("player2", this.currentTurn.currentMonster.currentHp, this.currentTurn.currentMonster.maxHp);
           console.log("UPDATIN ENEMY");
         }
-        console.log(`All of ${this.currentTurn.name}'s monsters had their hit points healed by ${move.power}!`);
+        displayMessage(`All of ${this.currentTurn.name}'s monsters had their hit points healed by ${move.power}!`);
       }
     }
     if (move.targets.includes(Targets.Enemy)) {
       if (move.affectsOffense) {
         activeMonster.offense += move.power;
-        console.log(`${activeMonster.name}'s offense is reduced by ${move.power}!`);
+        displayMessage(`${activeMonster.name}'s offense is reduced by ${move.power}!`);
       }
       if (move.affectsDefense) {
         activeMonster.defense += move.power;
-        console.log(`${activeMonster.name}'s defense is reduced by ${move.power}!`);
+        displayMessage(`${activeMonster.name}'s defense is reduced by ${move.power}!`);
       }
       if (move.affectsHp) {
         let damageTaken = activeMonster.takeDamage(move.power, attackingMonster);
@@ -204,9 +203,9 @@ class Battle {
         } else {
           updateHpBar("player1", activeMonster.currentHp, activeMonster.maxHp);
         }
-        console.log(`${activeMonster.name} took ${damageTaken} damage!`);
+        displayMessage(`${activeMonster.name} took ${damageTaken} damage!`);
         if (activeMonster.isFainted()) {
-          console.log(`${activeMonster.name} fainted!`);
+          displayMessage(`${activeMonster.name} fainted!`);
           activeMonster.fainted = true;
           if (this.opponent.activeMonster() === null) {
             winner = this.currentTurn.name;
@@ -240,20 +239,21 @@ class Battle {
         this.opponent.monsters.forEach((monster) => {
           monster.offense += move.power;
         })
-        console.log(`All of ${this.opponent.name}'s monsters had their offense decreased by ${move.power}!`);
+        displayMessage(`All of ${this.opponent.name}'s monsters had their offense decreased by ${move.power}!`);
       }
       if (move.affectsDefense) {
         this.opponent.monsters.forEach((monster) => {
           monster.defense += move.power;
         })
-        console.log(`All of ${this.opponent.name}'s monsters had their defense decreased by ${move.power}!`);
+        displayMessage(`All of ${this.opponent.name}'s monsters had their defense decreased by ${move.power}!`);
       }
       if (move.affectsHp) {
+        displayMessage(`All of ${this.opponent.name}'s monsters took damage!`);
         this.opponent.monsters.forEach((monster) => {
           let damageTaken = monster.takeDamage(move.power, attackingMonster);
           console.log(`${monster.name} took ${damageTaken}!`)
           if (monster.isFainted()) {
-            console.log(`${monster.name} fainted!`);
+            displayMessage(`${monster.name} fainted!`);
             monster.fainted = true;
             if (this.opponent.activeMonster() === null) {
               winner = this.currentTurn.name;
@@ -288,11 +288,11 @@ class Battle {
 
   handleSwitch(monster) {
     if (monster.isFainted()) {
-      console.log("You can't switch to a fainted monster!");
+      displayMessage("You can't switch to a fainted monster.");
     } else if (monster === this.currentTurn.currentMonster) {
-      console.log(`${monster.name} is your current monster!`);
+      displayMessage(`${monster.name} is your current monster.`);
     } else {
-      console.log(`Go, ${monster.name}!`);
+      displayMessage(`Go, ${monster.name}!`);
       this.currentTurn.currentMonster = monster;
       if (this.currentTurn === this.player1) {
         switchImage(monster.name, "player1");
@@ -316,7 +316,7 @@ class Battle {
 
   useItem(item, monster) {
     if (monster.fainted && item.effect === 0) {
-      console.log(`${monster.name} is revived!`);
+      displayMessage(`${monster.name} is revived!`);
       monster.fainted = false;
       monster.currentHp = 100;
     } else if (!monster.fainted && item.effect > 0) {
@@ -330,13 +330,13 @@ class Battle {
       } else {
         updateHpBar("player2", monster.currentHp, monster.maxHp);
       }
-      console.log(
+      displayMessage(
         `${monster.name} gained ${item.effect} hit points and now has ${monster.currentHp} hit points!`
       );
     } else if (monster.fainted && item.effect > 0) {
-      console.log(`You can't use this item on a fainted monster!`);
+      displayMessage(`You can't use this item on a fainted monster.`);
     } else if (!monster.fainted && item.effect === 0) {
-      console.log(`You can't use this item on an active monster!`);
+      displayMessage(`You can't use this item on an active monster.`);
     }
     if (!this.isBattleOver()) {
       opponentMove();
@@ -361,7 +361,7 @@ class Battle {
       );
       showMainMenu();
     } else {
-      console.log(`${winner} wins!`);
+      displayMessage(`${winner} wins!`);
       let victoryBanner = document.getElementById("game");
       victoryBanner.innerHTML = `<img src="YouWin.png">`;
     }
@@ -406,7 +406,7 @@ function showAttackMenu() {
         attack.use();
         handleAttack(attack);
       } else {
-        console.log("You can't use that move anymore!");
+        displayMessage("You can't use that move anymore.");
       }
     };
     attackMenu.appendChild(attackButton);
@@ -475,7 +475,7 @@ function showItemMenu() {
         option.use();
         showItemEffectMenu(option);
       } else {
-        console.log("You don't have anymore of that item!");
+        displayMessage("You don't have any more of that item.");
       }
     };
     itemMenu.appendChild(itemButton);
@@ -491,7 +491,7 @@ function showItemMenu() {
 function showFleeMenu() {
   const fleeMenu = document.getElementById("main-menu");
   fleeMenu.innerHTML = "";
-  console.log("Are you sure you want to run away?");
+  displayMessage("Are you sure you want to run away?");
   let fleeButton = document.createElement("button");
   fleeButton.innerText = "Flee";
   fleeButton.onclick = function () {
@@ -507,9 +507,20 @@ function showFleeMenu() {
 }
 
 function flee() {
-  console.log(`${battle.opponent.name} wins!`);
+  displayMessage(`${battle.opponent.name} wins!`);
   let fleeBanner = document.getElementById("game");
   fleeBanner.innerHTML = `<img src="GameOver.png">`;
+}
+
+function displayMessage(message) {
+  let battleLog1 = document.getElementById('battle-log1');
+  let battleLog2 = document.getElementById('battle-log2');
+  let battleLog3 = document.getElementById('battle-log3');
+  let battleLog4 = document.getElementById('battle-log4');
+  battleLog4.innerText = battleLog3.innerText;
+  battleLog3.innerText = battleLog2.innerText;
+  battleLog2.innerText = battleLog1.innerText;
+  battleLog1.innerText = message;
 }
 
 function handleAttack(move) {
