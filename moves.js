@@ -70,10 +70,10 @@ const moves = {
   tranquility: new Move({
     name: "Tranquility",
     type: "Grass",
-    power: -100,
+    power: 100,
     affectsHp: true,
     maxUsage: 2,
-    targets: [Targets.Self, Targets.Allies],
+    targets: [Targets.Enemies],
   }),
 
   escapeArtist: new Move({
@@ -152,7 +152,7 @@ const moves = {
     type: "Fire",
     power: 25,
     maxUsage: 5,
-    targets: [Targets.Enemy, Targets.Enemies],
+    targets: [Targets.Enemies],
   }),
 
   burn: new Move({
@@ -188,7 +188,7 @@ const moves = {
     maxUsage: 2,
     affectsDefense: true,
     affectsHp: false,
-    targets: [Targets.Self, Targets.Allies],
+    targets: [Targets.Allies],
   }),
 
   terrorize: new Move({
@@ -198,7 +198,7 @@ const moves = {
     maxUsage: 2,
     affectsDefense: true,
     affectsHp: false,
-    targets: [Targets.Enemy, Targets.Enemies],
+    targets: [Targets.Enemies],
   }),
 
   avalanche: new Move({

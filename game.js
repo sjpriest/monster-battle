@@ -39,7 +39,11 @@ class Monster {
   }
 
   takeDamage(damage, attackingMonster) {
-    let damageTaken = damage - this.defense + attackingMonster.offense;
+    if (damage - this.defense + attackingMonster.offense > 0) {
+      let damageTaken = damage - this.defense + attackingMonster.offense;
+    } else {
+      let damageTaken = 0;
+    }
     this.currentHp -= damageTaken;
     return damageTaken;
   }
@@ -152,6 +156,37 @@ class Battle {
       }
     }
     if (move.targets.includes(Targets.Allies)) {
+      if (move.affectsOffense) {
+        this.currentTurn.monsters.forEach((monster) => {
+          monster.offense += move.power;
+        })
+        console.log(`All of ${this.currentTurn.name}'s monsters had their offense increased by ${move.power}!`);
+      }
+      if (move.affectsDefense) {
+        this.currentTurn.monsters.forEach((monster) => {
+          monster.defense += move.power;
+        })
+        console.log(`All of ${this.currentTurn.name}'s monsters had their defense increased by ${move.power}!`);
+      }
+      if (move.affectsHp) {
+        this.currentTurn.monsters.forEach((monster) => {
+          console.log("DOIN STUFF");
+          if (monster.currentHp + move.power > monster.maxHp) {
+            monster.currentHp = monster.maxHp;
+          } else {
+            monster.currentHp += move.power;
+          }
+        })
+        console.log("YES???")
+        if (this.currentTurn === this.player1) {
+          updateHpBar("player1", this.currentTurn.currentMonster.currentHp, this.currentTurn.currentMonster.maxHp);
+          console.log("UPDATIN");
+        } else {
+          updateHpBar("player2", this.currentTurn.currentMonster.currentHp, this.currentTurn.currentMonster.maxHp);
+          console.log("UPDATIN ENEMY");
+        }
+        console.log(`All of ${this.currentTurn.name}'s monsters had their hit points healed by ${move.power}!`);
+      }
     }
     if (move.targets.includes(Targets.Enemy)) {
       if (move.affectsOffense) {
@@ -198,6 +233,55 @@ class Battle {
             }
           }
         }
+      }
+    }
+    if (move.targets.includes(Targets.Enemies)) {
+      if (move.affectsOffense) {
+        this.opponent.monsters.forEach((monster) => {
+          monster.offense += move.power;
+        })
+        console.log(`All of ${this.opponent.name}'s monsters had their offense decreased by ${move.power}!`);
+      }
+      if (move.affectsDefense) {
+        this.opponent.monsters.forEach((monster) => {
+          monster.defense += move.power;
+        })
+        console.log(`All of ${this.opponent.name}'s monsters had their defense decreased by ${move.power}!`);
+      }
+      if (move.affectsHp) {
+        this.opponent.monsters.forEach((monster) => {
+          let damageTaken = monster.takeDamage(move.power, attackingMonster);
+          console.log(`${monster.name} took ${damageTaken}!`)
+          if (monster.isFainted()) {
+            console.log(`${monster.name} fainted!`);
+            monster.fainted = true;
+            if (this.opponent.activeMonster() === null) {
+              winner = this.currentTurn.name;
+            } else {
+              if (this.opponent.currentMonster === monster) {
+                this.opponent.activeMonster();
+                if (this.opponent === this.player1) {
+                  switchImage(this.opponent.currentMonster.name, "player1");
+                } else {
+                  switchImage(this.opponent.currentMonster.name, "player2");
+                }
+              }
+            }
+          }
+          if (this.currentTurn === this.player1) {
+            updateHpBar(
+              "player2",
+              activeMonster.currentHp,
+              activeMonster.maxHp
+            );
+          } else {
+            updateHpBar(
+              "player1",
+              activeMonster.currentHp,
+              activeMonster.maxHp
+            );
+          }
+        }) 
       }
     }
   }
@@ -289,12 +373,6 @@ let attackButton = document.getElementById("attack-button");
 let switchButton = document.getElementById("switch-button");
 let itemButton = document.getElementById("item-button");
 let fleeButton = document.getElementById("flee-button");
-
-// // Get your menus
-// let mainMenu = document.getElementById('main-menu');
-// let attackMenu = document.getElementById('attack-menu');
-// let switchMenu = document.getElementById('switch-menu');
-// let itemMenu = document.getElementById('item-menu');
 
 function showMainMenu() {
   const mainMenu = document.getElementById("main-menu");
@@ -481,39 +559,6 @@ var wait = (ms) => {
     now = Date.now();
   }
 };
-// // Function to generate the attack menu
-// function generateAttackMenu(currentMonster) {
-//     // Get your attack menu
-//     let attackMenu = document.getElementById('menu');
-
-//     // Get the current monster's moves
-//     let moves = currentMonster.moves;  // Replace this with actual logic
-
-//     // Empty the attackMenu first
-//     while (attackMenu.firstChild) {
-//         attackMenu.firstChild.remove();
-//     }
-
-//     // Add a button for each move
-//     for (let move of moves) {
-//         let moveButton = document.createElement('button');
-//         moveButton.textContent = move.name;
-//         moveButton.addEventListener('click', function() {
-//             battle.handleMove(move);
-//             attackMenu.style.display = "none";
-//             mainMenu.style.display = "flex";
-//         });
-//         attackMenu.appendChild(moveButton);
-//     }
-// }
-
-// // When the attack button is clicked, generate the attack menu and hide the main menu
-// document.getElementById('attack-button').addEventListener('click', function() {
-//     // Replace "currentMonster" with the actual current monster of the player
-//     generateAttackMenu(currentMonster);
-//     mainMenu.style.display = "none";
-//     attackMenu.style.display = "flex";
-// });
 
 let battle = null;
 let winner = null;
