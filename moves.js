@@ -53,7 +53,7 @@ const moves = {
     name: "Vine Whip",
     type: "Grass",
     targets: [Targets.Enemy],
-    power: 100,
+    power: 1000,
     maxUsage: 3,
   }),
 
@@ -73,7 +73,7 @@ const moves = {
     power: 100,
     affectsHp: true,
     maxUsage: 2,
-    targets: [Targets.Enemies],
+    targets: [Targets.Allies],
   }),
 
   escapeArtist: new Move({
@@ -142,7 +142,7 @@ const moves = {
   flameThrower: new Move({
     name: "Flame Thrower",
     type: "Fire",
-    power: 100,
+    power: 1000,
     maxUsage: 3,
     targets: [Targets.Enemy],
   }),

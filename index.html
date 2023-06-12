@@ -5,35 +5,25 @@
     <style>
         .hp-bar {
           position: absolute;
-          width: 83%; 
+          width: 68%; 
+          height: 15px;
           background-color: #f3f3f3; 
-          border: solid 1px #e7e7e7; 
+          border: solid 1px #e7e7e7;
+          z-index: 999;
         }
-        .hp-bar div {
-          height: 30px; 
+        .hp-bar .hp-bar-inner {
+          height: 100%; 
           background-color: #009578; 
-          text-align: right;
-          line-height: 30px; 
-          color: white; 
-          font-size: 12px; 
           width: 100%;
+          transition: width 1s ease-in-out;
         }
-        #hp-bar-player1 {
+        #hp-bar-positioner1 {
             top: 21px;
             left: 34px;
         }
-        #hp-bar-player2 {
+        #hp-bar-positioner2 {
             top: 21px;
-            left: 91px;
-        }
-        progress[value]::-webkit-progress-bar {
-            background-color: #eee;
-        }
-        progress[value]::-webkit-progress-value {
-            background-color: #f00;
-        }
-        progress[value]::-moz-progress-bar {
-            background-color: #f00;
+            left: 92px;
         }
         body {
             background-color: black;
@@ -135,6 +125,16 @@
             color: black;
             border: 2px solid #4CAF50;
         }
+        .actions button:disabled {
+            background-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+        }
+        .actions button:disabled:hover {
+            background-color: #cccccc;
+            color: #666666;
+            border: none;
+        }
     </style>
 </head>
 <body>
@@ -142,15 +142,15 @@
         <div class="battle-container">
             <img id="interface" src="InterfaceWLogs.png" alt="Overall interface" style="z-index:1">
             <div class="player player1">
-                <div class=hp-bar>
-                    <progress class="hp-bar" id="hp-bar-player1" max="100" value="100" style="z-index:999"></progress>
+                <div class="hp-bar" id="hp-bar-positioner1">
+                    <div class="hp-bar-inner" id="hp-bar-player1"></div>
                 </div>
                 <img id="player1-monster" class="monster-img" src="Bulbadon.png" alt="Player 1's Monster" style="z-index:0">
                 <p id="player1-monster-name" style="text-align:center; font-size:18px; top:13%; right:1%; margin:0px; position:relative; z-index:999">Bulbadon</p>
             </div>
             <div class="player player2">
-                <div class=hp-bar>
-                    <progress class="hp-bar" id="hp-bar-player2" max="100" value="100" style="z-index:999"></progress>
+                <div class=hp-bar id="hp-bar-positioner2">
+                    <div class="hp-bar-inner" id="hp-bar-player2"></div>
                 </div>
                 <img id="player2-monster" class="monster-img" src="Charagon.png" alt="Player 2's Monster" style="z-index:0">
                 <p id="player2-monster-name" style="text-align:center; font-size:18px; margin:0px; top:13%; left:3%; position:relative; z-index:999">Charagon</p>

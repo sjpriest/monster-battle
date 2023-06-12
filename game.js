@@ -43,7 +43,11 @@ class Monster {
     if (damage - this.defense + attackingMonster.offense > 0) {
       damageTaken = damage - this.defense + attackingMonster.offense;
     }
-    this.currentHp -= damageTaken;
+    if (this.currentHp - damageTaken < 0) {
+      this.currentHp = 0;
+    } else {
+      this.currentHp -= damageTaken;
+    }
     return damageTaken;
   }
 }
@@ -125,7 +129,7 @@ class Battle {
     return null;
   }
 
-  handleMove(move) {
+  async handleMove(move) {
     let activeMonster = this.opponent.currentMonster;
     let attackingMonster = this.currentTurn.currentMonster;
     displayMessage(`${attackingMonster.name} used ${move.name}.`);
@@ -198,12 +202,20 @@ class Battle {
       }
       if (move.affectsHp) {
         let damageTaken = activeMonster.takeDamage(move.power, attackingMonster);
-        if (this.currentTurn === this.player1) {
-          updateHpBar("player2", activeMonster.currentHp, activeMonster.maxHp);
-        } else {
-          updateHpBar("player1", activeMonster.currentHp, activeMonster.maxHp);
-        }
         displayMessage(`${activeMonster.name} took ${damageTaken} damage!`);
+        if (this.opponent === this.player1) {
+          await updateHpBar(
+            "player1",
+            activeMonster.currentHp,
+            activeMonster.maxHp
+          );
+        } else {
+          await updateHpBar(
+            "player2",
+            activeMonster.currentHp,
+            activeMonster.maxHp
+          );
+        }
         if (activeMonster.isFainted()) {
           displayMessage(`${activeMonster.name} fainted!`);
           activeMonster.fainted = true;
@@ -216,21 +228,20 @@ class Battle {
             } else {
               switchImage(this.opponent.currentMonster.name, "player2");
             }
-            let activeMonster = this.opponent.currentMonster;
-            if (this.currentTurn === this.player1) {
-              updateHpBar(
+            if (this.opponent === this.player1) {
+              await updateHpBar(
                 "player1",
-                activeMonster.currentHp,
-                activeMonster.maxHp
+                this.opponent.currentMonster.currentHp,
+                this.opponent.currentMonster.maxHp
               );
             } else {
-              updateHpBar(
+              await updateHpBar(
                 "player2",
-                activeMonster.currentHp,
-                activeMonster.maxHp
+                this.opponent.currentMonster.currentHp,
+                this.opponent.currentMonster.maxHp
               );
             }
-          }
+          } 
         }
       }
     }
@@ -250,43 +261,51 @@ class Battle {
       if (move.affectsHp) {
         displayMessage(`All of ${this.opponent.name}'s monsters took damage!`);
         this.opponent.monsters.forEach((monster) => {
-          let damageTaken = monster.takeDamage(move.power, attackingMonster);
-          console.log(`${monster.name} took ${damageTaken}!`)
-          if (monster.isFainted()) {
-            displayMessage(`${monster.name} fainted!`);
-            monster.fainted = true;
-            if (this.opponent.activeMonster() === null) {
-              winner = this.currentTurn.name;
-            } else {
-              if (this.opponent.currentMonster === monster) {
-                this.opponent.activeMonster();
-                if (this.opponent === this.player1) {
-                  switchImage(this.opponent.currentMonster.name, "player1");
-                } else {
-                  switchImage(this.opponent.currentMonster.name, "player2");
+          if (!monster.fainted) {
+            let damageTaken = monster.takeDamage(move.power, attackingMonster);
+            console.log(`${monster.name} took ${damageTaken}!`)
+            if (monster.isFainted()) {
+              displayMessage(`${monster.name} fainted!`);
+              monster.fainted = true;
+              if (this.opponent.activeMonster() === null) {
+                winner = this.currentTurn.name;
+              } else {
+                if (monster === this.opponent.currentMonster) {
+                  if (this.opponent.currentMonster) {
+                    if (this.opponent === this.player1) {
+                      switchImage(this.opponent.currentMonster.name, "player1");
+                    } else {
+                      switchImage(this.opponent.currentMonster.name, "player2");
+                    }
+                  }
                 }
               }
             }
-          }
-          if (this.currentTurn === this.player1) {
-            updateHpBar(
-              "player2",
-              activeMonster.currentHp,
-              activeMonster.maxHp
-            );
-          } else {
-            updateHpBar(
-              "player1",
-              activeMonster.currentHp,
-              activeMonster.maxHp
-            );
+            if (this.currentTurn === this.player1) {
+              updateHpBar(
+                "player2",
+                activeMonster.currentHp,
+                activeMonster.maxHp
+              );
+            } else {
+              updateHpBar(
+                "player1",
+                activeMonster.currentHp,
+                activeMonster.maxHp
+              );
+            }
           }
         }) 
       }
     }
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, 1000)
+    });
   }
 
-  handleSwitch(monster) {
+  async handleSwitch(monster) {
     if (monster.isFainted()) {
       displayMessage("You can't switch to a fainted monster.");
     } else if (monster === this.currentTurn.currentMonster) {
@@ -296,59 +315,80 @@ class Battle {
       this.currentTurn.currentMonster = monster;
       if (this.currentTurn === this.player1) {
         switchImage(monster.name, "player1");
+        await updateHpBar("player1", monster.currentHp, monster.maxHp);
       } else {
         switchImage(monster.name, "player2");
+        await updateHpBar("player2", monster.currentHp, monster.maxHp);
       }
       if (!this.isBattleOver()) {
-        opponentMove();
+        await opponentMove();
       }
       this.run();
     }
   }
 
-  handleAction(action) {
+  async handleAction(action) {
     if (action instanceof Move) {
-      this.handleMove(action);
+      console.log("WAITING for HANDLEMOVE")
+      await this.handleMove(action);
+      console.log("MOVE HANDLED")
     } else if (action instanceof Monster) {
       this.currentTurn.switchMonster(action);
     }
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, 10)
+    });
   }
 
-  useItem(item, monster) {
+  async useItem(item, monster) {
     if (monster.fainted && item.effect === 0) {
+      displayMessage(`${this.currentTurn.name} used ${item.name} on ${monster.name}`)
+      await sleep(2000);
       displayMessage(`${monster.name} is revived!`);
       monster.fainted = false;
       monster.currentHp = 100;
+      await sleep(2000);
+      if (!this.isBattleOver()) {
+        await opponentMove();
+      }
+      this.run();
     } else if (!monster.fainted && item.effect > 0) {
+      displayMessage(`${this.currentTurn.name} used ${item.name} on ${monster.name}`)
       if (monster.currentHp + item.effect > monster.maxHp) {
         monster.currentHp = monster.maxHp;
       } else {
         monster.currentHp += item.effect;
       }
-      if (this.currentTurn === this.player1) {
-        updateHpBar("player1", monster.currentHp, monster.maxHp);
-      } else {
-        updateHpBar("player2", monster.currentHp, monster.maxHp);
+      if (this.currentTurn.currentMonster === monster) {
+        if (this.currentTurn === this.player1) {
+          await updateHpBar("player1", monster.currentHp, monster.maxHp);
+        } else {
+          await updateHpBar("player2", monster.currentHp, monster.maxHp);
+        }
       }
       displayMessage(
-        `${monster.name} gained ${item.effect} hit points and now has ${monster.currentHp} hit points!`
+        `${monster.name} recovered health!`
       );
+      await sleep(2000);
+      if (!this.isBattleOver()) {
+        await opponentMove();
+      }
+      this.run();
     } else if (monster.fainted && item.effect > 0) {
       displayMessage(`You can't use this item on a fainted monster.`);
     } else if (!monster.fainted && item.effect === 0) {
       displayMessage(`You can't use this item on an active monster.`);
     }
-    if (!this.isBattleOver()) {
-      opponentMove();
-    }
-    this.run();
   }
 
   isBattleOver() {
-    return (
-      this.player1.monsters.every((monster) => monster.fainted) ||
-      this.player2.monsters.every((monster) => monster.fainted)
-    );
+      if (this.player1.monsters.every((monster) => monster.fainted)) {
+        return 'player2'
+      } else if (this.player2.monsters.every((monster) => monster.fainted)) {
+        return 'player1'
+      }
   }
 
   run() {
@@ -360,10 +400,18 @@ class Battle {
         `Player 2's ${this.player2.currentMonster.name} HP: ${this.player2.currentMonster.currentHp}/${this.player2.currentMonster.maxHp} Offense: ${this.player2.currentMonster.offense} Defense: ${this.player2.currentMonster.defense}`
       );
       showMainMenu();
-    } else {
+    } else if (this.isBattleOver() === 'player1') {
       displayMessage(`${winner} wins!`);
-      let victoryBanner = document.getElementById("game");
-      victoryBanner.innerHTML = `<img src="YouWin.png">`;
+      setTimeout(function() {
+        let victoryBanner = document.getElementById("game");
+        victoryBanner.innerHTML = `<img src="YouWin.png">`;
+      }, 3000)
+    } else if (this.isBattleOver() === 'player2') {
+      displayMessage(`${winner} wins!`);
+      setTimeout(function() {
+        let lossBanner = document.getElementById("game");
+        lossBanner.innerHTML = `<img src="GameOver.png">`;
+      }, 3000)
     }
   }
 }
@@ -397,6 +445,8 @@ function showAttackMenu() {
   const attacks = battle.currentTurn.currentMonster.moves;
   // Clear out the existing menu
   attackMenu.innerHTML = "";
+  // Clear out existing buttons
+  buttons = [];
   // For each attack, create a button, add the onclick, and append it to the menu
   attacks.forEach((attack) => {
     let attackButton = document.createElement("button");
@@ -404,12 +454,14 @@ function showAttackMenu() {
     attackButton.onclick = function () {
       if (attack.isUsable()) {
         attack.use();
+        disableButtons();
         handleAttack(attack);
       } else {
         displayMessage("You can't use that move anymore.");
       }
     };
     attackMenu.appendChild(attackButton);
+    buttons.push(attackButton);
   });
   let backButton = document.createElement("button");
   backButton.innerText = "Back";
@@ -417,6 +469,7 @@ function showAttackMenu() {
     showMainMenu();
   };
   attackMenu.appendChild(backButton);
+  buttons.push(backButton);
 }
 
 function showSwitchMenu() {
@@ -424,14 +477,17 @@ function showSwitchMenu() {
   const switchOptions = battle.currentTurn.monsters;
   // Clear out the existing menu
   switchMenu.innerHTML = "";
+  buttons = [];
   // For each attack, create a button, add the onclick, and append it to the menu
   switchOptions.forEach((option) => {
     let switchButton = document.createElement("button");
     switchButton.innerText = option.name;
     switchButton.onclick = function () {
+      disableButtons();
       battle.handleSwitch(option);
     };
     switchMenu.appendChild(switchButton);
+    buttons.push(switchButton);
   });
   let backButton = document.createElement("button");
   backButton.innerText = "Back";
@@ -439,6 +495,7 @@ function showSwitchMenu() {
     showMainMenu();
   };
   switchMenu.appendChild(backButton);
+  buttons.push(backButton);
 }
 
 function showItemEffectMenu(item) {
@@ -446,14 +503,17 @@ function showItemEffectMenu(item) {
   const itemEffectOptions = battle.currentTurn.monsters;
   // Clear out the existing menu
   itemEffectMenu.innerHTML = "";
+  buttons = [];
   // For each monster, create a button, add the onclick, and append it to the menu
   itemEffectOptions.forEach((option) => {
     let itemEffectButton = document.createElement("button");
     itemEffectButton.innerText = option.name;
     itemEffectButton.onclick = function () {
+      disableButtons();
       battle.useItem(item, option);
     };
     itemEffectMenu.appendChild(itemEffectButton);
+    buttons.push(itemEffectButton);
   });
   let backButton = document.createElement("button");
   backButton.innerText = "Back";
@@ -461,6 +521,7 @@ function showItemEffectMenu(item) {
     showItemMenu();
   };
   itemEffectMenu.appendChild(backButton);
+  buttons.push(backButton);
 }
 
 function showItemMenu() {
@@ -506,6 +567,11 @@ function showFleeMenu() {
   fleeMenu.appendChild(backButton);
 }
 
+function disableMenu() {
+  const menu = document.getElementById("main-menu");
+
+}
+
 function flee() {
   displayMessage(`${battle.opponent.name} wins!`);
   let fleeBanner = document.getElementById("game");
@@ -523,9 +589,9 @@ function displayMessage(message) {
   battleLog1.innerText = message;
 }
 
-function handleAttack(move) {
-  battle.handleAction(move);
-  opponentMove();
+async function handleAttack(move) {
+  await battle.handleAction(move);
+  await opponentMove();
   battle.run();
 }
 
@@ -541,14 +607,19 @@ function updateHpBar(player, currentHp, maxHp) {
   let currentPlayer = player;
   let progressBar = document.getElementById(`hp-bar-${currentPlayer}`);
   let hpPercentage = (currentHp / maxHp) * 100;
-  progressBar.value = hpPercentage;
+  progressBar.style.width = `${hpPercentage}%`;
   console.log("HPBAR UPDATED:" + hpPercentage);
+
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, 1500)
+  });
 }
 
-function opponentMove() {
+async function opponentMove() {
   console.log("It's the opponent's turn!");
   if (!battle.isBattleOver()) {
-    wait(1000);
     console.log(`It's ${battle.opponent.name}'s turn!`);
     battle.switchTurn();
     let movesNumber = battle.currentTurn.currentMonster.moves.length;
@@ -556,23 +627,33 @@ function opponentMove() {
       battle.currentTurn.currentMonster.moves[
         Math.floor(Math.random() * movesNumber)
       ];
-
     console.log(`Opponent is using ${move.name}!`);
-    battle.handleMove(move);
+    await battle.handleMove(move);
+    console.log("ABOUT TO SWITCH TURN")
     battle.switchTurn();
   }
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, 1000); // same duration as your transition
+  });
 }
 
-var wait = (ms) => {
-  const start = Date.now();
-  let now = start;
-  while (now - start < ms) {
-    now = Date.now();
-  }
-};
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function disableButtons() {
+  buttons.forEach(button => button.disabled = true);
+}
+
+function enableButtons() {
+  buttons.forEach(button => button.disabled = false);
+}
 
 let battle = null;
 let winner = null;
+let buttons = [];
 
 function main() {
   // Let's create some monsters
@@ -583,8 +664,8 @@ function main() {
   ]);
   let charagon = new Monster("Charagon", "Fire", 250, 75, 25, [
     flameThrower,
-    incinerate,
-    hardenedShell,
+    // incinerate,
+    // hardenedShell,
   ]);
   let houndini = new Monster("Houndini", "Psychic", 200, 50, 50, [
     bite,
@@ -601,7 +682,7 @@ function main() {
     clawsOfFury,
     evade,
   ]);
-  let quartzion = new Monster("Quartzion", "Rock", 200, 50, 125, [
+  let quartzion = new Monster("Quartzion", "Rock", 200, 25, 75, [
     avalanche,
     sliceAndDice,
     terrorize,
