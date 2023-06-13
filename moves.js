@@ -53,7 +53,7 @@ const moves = {
     name: "Vine Whip",
     type: "Grass",
     targets: [Targets.Enemy],
-    power: 1000,
+    power: 100,
     maxUsage: 3,
   }),
 
@@ -142,7 +142,7 @@ const moves = {
   flameThrower: new Move({
     name: "Flame Thrower",
     type: "Fire",
-    power: 1000,
+    power: 100,
     maxUsage: 3,
     targets: [Targets.Enemy],
   }),

@@ -651,11 +651,34 @@ function enableButtons() {
   buttons.forEach(button => button.disabled = false);
 }
 
+function startGame() {
+  document.getElementById("start-button").addEventListener("click", function() {
+    document.getElementById("overlay").style.display = "none";
+    music.loop = true;
+    music.play();
+  });
+}
+
+document.getElementById("toggle-music").addEventListener("click", function() {
+    if(music.paused) {
+        music.play();
+    } else {
+        music.pause();
+    }
+});
+
+document.getElementById("volume-slider").addEventListener("input", function() {
+    music.volume = this.value;
+});
+
+let music = new Audio('battle-music.wav');
+
 let battle = null;
 let winner = null;
 let buttons = [];
 
 function main() {
+  startGame();
   // Let's create some monsters
   let bulbadon = new Monster("Bulbadon", "Grass", 200, 50, 50, [
     intimidate,
@@ -664,8 +687,8 @@ function main() {
   ]);
   let charagon = new Monster("Charagon", "Fire", 250, 75, 25, [
     flameThrower,
-    // incinerate,
-    // hardenedShell,
+    incinerate,
+    hardenedShell,
   ]);
   let houndini = new Monster("Houndini", "Psychic", 200, 50, 50, [
     bite,
