@@ -1,5 +1,17 @@
 import moves, { Move, Targets } from "./moves.js";
 
+let hoverSound = new Audio('retro_UI_hover.wav');
+let clickSound = new Audio('retro_UI_select.wav');
+let attackSound = new Audio('retro_impact_hit_13.wav');
+let music = new Audio('battle-music.wav');
+let battle = null;
+let winner = null;
+let buttons = [];
+let normalButton = "StraightButton.png";
+let hoverButton = "ButtonHover.png";
+let clickButton = "ButtonClicked.png";
+let disabledButton = "ButtonDisabled.png";
+
 const {
   tackle,
   vineWhip,
@@ -21,6 +33,58 @@ const {
   terrorize,
   avalanche,
 } = moves;
+
+
+class Button {
+  constructor(text, hoverImage, clickImage, normalImage, mouseoverSound, clickSound, action) {
+    this.element = document.createElement("div");
+    this.element.className = 'actions';
+
+    this.imageElement = document.createElement('img');
+    this.imageElement.src = normalImage;
+    this.element.appendChild(this.imageElement);
+
+    let span = document.createElement('span');
+    span.innerText = text;
+    this.element.appendChild(span);
+
+    this.element.addEventListener("mouseover", function() {
+      if (!this.disabled) {
+        mouseoverSound.play();
+        this.imageElement.src = hoverImage;
+        console.log(this);
+      }
+    }.bind(this));
+
+    this.element.addEventListener("mouseout", function() {
+      if (!this.disabled) {
+        this.imageElement.src = normalImage;
+      }
+    }.bind(this));
+
+    this.element.addEventListener("click", async function () {
+      if (!this.disabled) {
+        clickSound.play();
+        this.imageElement.src = clickImage;
+        await sleep(200);
+        this.imageElement.src = normalImage;
+        action();
+      }
+    }.bind(this));
+
+    this.disabled = false;
+  }
+
+  disable() {
+    this.disabled = true;
+    this.imageElement.src = disabledButton; // Set the source to a disabled button image
+  }
+
+  enable() {
+    this.disabled = false;
+    this.imageElement.children[0].src = normalButton; // Reset the source to the normal button image
+  }
+}
 
 class Monster {
   constructor(name, type, maxHp, offense, defense, moves) {
@@ -173,20 +237,16 @@ class Battle {
       }
       if (move.affectsHp) {
         this.currentTurn.monsters.forEach((monster) => {
-          console.log("DOIN STUFF");
           if (monster.currentHp + move.power > monster.maxHp) {
             monster.currentHp = monster.maxHp;
           } else {
             monster.currentHp += move.power;
           }
         })
-        console.log("YES???")
         if (this.currentTurn === this.player1) {
           updateHpBar("player1", this.currentTurn.currentMonster.currentHp, this.currentTurn.currentMonster.maxHp);
-          console.log("UPDATIN");
         } else {
           updateHpBar("player2", this.currentTurn.currentMonster.currentHp, this.currentTurn.currentMonster.maxHp);
-          console.log("UPDATIN ENEMY");
         }
         displayMessage(`All of ${this.currentTurn.name}'s monsters had their hit points healed by ${move.power}!`);
       }
@@ -223,6 +283,7 @@ class Battle {
             winner = this.currentTurn.name;
           } else {
             this.opponent.activeMonster();
+            console.log("Current active now:" + this.opponent.currentMonster.name)
             if (this.opponent === this.player1) {
               switchImage(this.opponent.currentMonster.name, "player1");
             } else {
@@ -260,42 +321,50 @@ class Battle {
       }
       if (move.affectsHp) {
         displayMessage(`All of ${this.opponent.name}'s monsters took damage!`);
-        this.opponent.monsters.forEach((monster) => {
+        for (const monster of this.opponent.monsters) {
           if (!monster.fainted) {
             let damageTaken = monster.takeDamage(move.power, attackingMonster);
             console.log(`${monster.name} took ${damageTaken}!`)
+            if (this.opponent.currentMonster === monster) {
+              if (this.opponent === this.player1) {
+                await updateHpBar(
+                  "player1",
+                  monster.currentHp,
+                  monster.maxHp
+                );
+              } else {
+                await updateHpBar(
+                  "player2",
+                  monster.currentHp,
+                  monster.maxHp
+                );
+              }
+            }
             if (monster.isFainted()) {
               displayMessage(`${monster.name} fainted!`);
               monster.fainted = true;
               if (this.opponent.activeMonster() === null) {
                 winner = this.currentTurn.name;
               } else {
-                if (monster === this.opponent.currentMonster) {
-                  if (this.opponent.currentMonster) {
-                    if (this.opponent === this.player1) {
-                      switchImage(this.opponent.currentMonster.name, "player1");
-                    } else {
-                      switchImage(this.opponent.currentMonster.name, "player2");
-                    }
-                  }
+                if (this.opponent === this.player1) {
+                  switchImage(this.opponent.currentMonster.name, "player1");
+                  await updateHpBar(
+                    "player1",
+                    this.opponent.currentMonster.currentHp,
+                    this.opponent.currentMonster.maxHp
+                  );
+                } else {
+                  switchImage(this.opponent.currentMonster.name, "player2");
+                  await updateHpBar(
+                    "player2",
+                    this.opponent.currentMonster.currentHp,
+                    this.opponent.currentMonster.maxHp
+                  );
                 }
               }
             }
-            if (this.currentTurn === this.player1) {
-              updateHpBar(
-                "player2",
-                activeMonster.currentHp,
-                activeMonster.maxHp
-              );
-            } else {
-              updateHpBar(
-                "player1",
-                activeMonster.currentHp,
-                activeMonster.maxHp
-              );
-            }
           }
-        }) 
+        }
       }
     }
     return new Promise(resolve => {
@@ -311,6 +380,7 @@ class Battle {
     } else if (monster === this.currentTurn.currentMonster) {
       displayMessage(`${monster.name} is your current monster.`);
     } else {
+      disableButtons();
       displayMessage(`Go, ${monster.name}!`);
       this.currentTurn.currentMonster = monster;
       if (this.currentTurn === this.player1) {
@@ -344,6 +414,7 @@ class Battle {
 
   async useItem(item, monster) {
     if (monster.fainted && item.effect === 0) {
+      disableButtons()
       displayMessage(`${this.currentTurn.name} used ${item.name} on ${monster.name}`)
       await sleep(2000);
       displayMessage(`${monster.name} is revived!`);
@@ -353,8 +424,10 @@ class Battle {
       if (!this.isBattleOver()) {
         await opponentMove();
       }
+      item.use();
       this.run();
     } else if (!monster.fainted && item.effect > 0) {
+      disableButtons()
       displayMessage(`${this.currentTurn.name} used ${item.name} on ${monster.name}`)
       if (monster.currentHp + item.effect > monster.maxHp) {
         monster.currentHp = monster.maxHp;
@@ -375,6 +448,7 @@ class Battle {
       if (!this.isBattleOver()) {
         await opponentMove();
       }
+      item.use();
       this.run();
     } else if (monster.fainted && item.effect > 0) {
       displayMessage(`You can't use this item on a fainted monster.`);
@@ -384,11 +458,11 @@ class Battle {
   }
 
   isBattleOver() {
-      if (this.player1.monsters.every((monster) => monster.fainted)) {
-        return 'player2'
-      } else if (this.player2.monsters.every((monster) => monster.fainted)) {
-        return 'player1'
-      }
+    if (this.player1.monsters.every((monster) => monster.fainted)) {
+      return 'player2'
+    } else if (this.player2.monsters.every((monster) => monster.fainted)) {
+      return 'player1'
+    }
   }
 
   run() {
@@ -422,25 +496,53 @@ let switchButton = document.getElementById("switch-button");
 let itemButton = document.getElementById("item-button");
 let fleeButton = document.getElementById("flee-button");
 
+function setupButton(buttonId, callback) {
+  const button = document.getElementById(buttonId);
+  
+  button.addEventListener("mouseover", function() {
+    this.children[0].src = hoverButton; // Change the image to hoverImage when the mouse hovers over the button
+    hoverSound.play();
+  });
+
+  button.addEventListener("mouseout", function() {
+    this.children[0].src = normalButton; // Change the image back to normalImage when the mouse leaves the button
+  });
+
+  button.addEventListener("click", async function() {
+    this.children[0].src = clickButton; // Change the image to clickImage when the button is clicked
+    await sleep(200);
+    callback();
+  });
+}
+
 function showMainMenu() {
   const mainMenu = document.getElementById("main-menu");
   mainMenu.innerHTML = `
-        <button id="attack-button">Attack</button>
-        <button id="switch-button">Switch</button>
-        <button id="item-button">Item</button>
-        <button id="flee-button">Flee</button>
+        <div id="attack-button">
+          <img src="StraightButton.png" alt="Attack">
+          <span>Attack</span>
+        </div>
+        <div id="switch-button">
+          <img src="StraightButton.png" alt="Switch">
+          <span>Switch</span>
+        </div>
+        <div id="item-button">
+          <img src="StraightButton.png" alt="Item">
+          <span>Item</span>
+        </div>
+        <div id="flee-button">
+          <img src="StraightButton.png" alt="Flee">
+          <span>Flee</span>
+        </div>
     `;
-  const attackButton = document.getElementById("attack-button");
-  attackButton.addEventListener("click", showAttackMenu);
-  const switchButton = document.getElementById("switch-button");
-  switchButton.addEventListener("click", showSwitchMenu);
-  const itemButton = document.getElementById("item-button");
-  itemButton.addEventListener("click", showItemMenu);
-  const fleeButton = document.getElementById("flee-button");
-  fleeButton.addEventListener("click", showFleeMenu);
+  setupButton("attack-button", showAttackMenu);
+  setupButton("switch-button", showSwitchMenu);
+  setupButton("item-button", showItemMenu);
+  setupButton("flee-button", showFleeMenu);
 }
 
 function showAttackMenu() {
+  clickSound.play()
   const attackMenu = document.getElementById("main-menu");
   const attacks = battle.currentTurn.currentMonster.moves;
   // Clear out the existing menu
@@ -449,30 +551,27 @@ function showAttackMenu() {
   buttons = [];
   // For each attack, create a button, add the onclick, and append it to the menu
   attacks.forEach((attack) => {
-    let attackButton = document.createElement("button");
-    attackButton.innerText = `${attack.name}, ${attack.currentUsage}/${attack.maxUsage}`;
-    attackButton.onclick = function () {
+    let attackButton = new Button(`${attack.name}, ${attack.currentUsage}/${attack.maxUsage}`, hoverButton, clickButton, normalButton, hoverSound, attackSound, function() {
       if (attack.isUsable()) {
         attack.use();
         disableButtons();
+        buttons.forEach(button => console.log(button.element.disabled));
         handleAttack(attack);
       } else {
         displayMessage("You can't use that move anymore.");
       }
-    };
-    attackMenu.appendChild(attackButton);
+    });
+    attackMenu.appendChild(attackButton.element);
     buttons.push(attackButton);
   });
-  let backButton = document.createElement("button");
-  backButton.innerText = "Back";
-  backButton.onclick = function () {
-    showMainMenu();
-  };
-  attackMenu.appendChild(backButton);
+  let backButton = new Button("Back", hoverButton, clickButton, normalButton, hoverSound, clickSound, showMainMenu);
+  attackMenu.appendChild(backButton.element);
   buttons.push(backButton);
+  buttons.forEach(button => console.log(button.element));
 }
 
 function showSwitchMenu() {
+  clickSound.play();
   const switchMenu = document.getElementById("main-menu");
   const switchOptions = battle.currentTurn.monsters;
   // Clear out the existing menu
@@ -480,21 +579,14 @@ function showSwitchMenu() {
   buttons = [];
   // For each attack, create a button, add the onclick, and append it to the menu
   switchOptions.forEach((option) => {
-    let switchButton = document.createElement("button");
-    switchButton.innerText = option.name;
-    switchButton.onclick = function () {
-      disableButtons();
+    let switchButton = new Button(`${option.name} ${option.currentHp}/${option.maxHp}`, hoverButton, clickButton, normalButton, hoverSound, clickSound, function() {
       battle.handleSwitch(option);
-    };
-    switchMenu.appendChild(switchButton);
+    })
+    switchMenu.appendChild(switchButton.element);
     buttons.push(switchButton);
   });
-  let backButton = document.createElement("button");
-  backButton.innerText = "Back";
-  backButton.onclick = function () {
-    showMainMenu();
-  };
-  switchMenu.appendChild(backButton);
+  let backButton = new Button("Back", hoverButton, clickButton, normalButton, hoverSound, clickSound, showMainMenu);
+  switchMenu.appendChild(backButton.element);
   buttons.push(backButton);
 }
 
@@ -506,73 +598,55 @@ function showItemEffectMenu(item) {
   buttons = [];
   // For each monster, create a button, add the onclick, and append it to the menu
   itemEffectOptions.forEach((option) => {
-    let itemEffectButton = document.createElement("button");
-    itemEffectButton.innerText = option.name;
-    itemEffectButton.onclick = function () {
-      disableButtons();
+    let itemEffectButton = new Button(`${option.name} ${option.currentHp}/${option.maxHp}`, hoverButton, clickButton, normalButton, hoverSound, clickSound, function() {
       battle.useItem(item, option);
-    };
-    itemEffectMenu.appendChild(itemEffectButton);
+    });
+    itemEffectMenu.appendChild(itemEffectButton.element);
     buttons.push(itemEffectButton);
   });
-  let backButton = document.createElement("button");
-  backButton.innerText = "Back";
-  backButton.onclick = function () {
-    showItemMenu();
-  };
-  itemEffectMenu.appendChild(backButton);
+  let backButton = new Button("Back", hoverButton, clickButton, normalButton, hoverSound, clickSound, showMainMenu);
+  itemEffectMenu.appendChild(backButton.element);
   buttons.push(backButton);
 }
 
 function showItemMenu() {
+  clickSound.play();
   const itemMenu = document.getElementById("main-menu");
   const itemOptions = battle.currentTurn.items;
   itemMenu.innerHTML = "";
+  buttons = [];
   itemOptions.forEach((option) => {
-    let itemButton = document.createElement("button");
-    itemButton.innerText = `${option.name}, ${option.number}`;
-    itemButton.onclick = function () {
+    let itemButton = new Button(`${option.name}, ${option.number}`, hoverButton, clickButton, normalButton, hoverSound, clickSound, function() {
       if (option.isRemaining()) {
-        option.use();
         showItemEffectMenu(option);
       } else {
         displayMessage("You don't have any more of that item.");
       }
-    };
-    itemMenu.appendChild(itemButton);
+    });
+    itemMenu.appendChild(itemButton.element);
+    buttons.push(itemButton);
   });
-  let backButton = document.createElement("button");
-  backButton.innerText = "Back";
-  backButton.onclick = function () {
-    showMainMenu();
-  };
-  itemMenu.appendChild(backButton);
+  let backButton = new Button("Back", hoverButton, clickButton, normalButton, hoverSound, clickSound, showMainMenu);
+  itemMenu.appendChild(backButton.element);
+  buttons.push(backButton);
 }
 
 function showFleeMenu() {
+  clickSound.play();
   const fleeMenu = document.getElementById("main-menu");
   fleeMenu.innerHTML = "";
   displayMessage("Are you sure you want to run away?");
-  let fleeButton = document.createElement("button");
-  fleeButton.innerText = "Flee";
-  fleeButton.onclick = function () {
+  let fleeButton = new Button(`Flee`, hoverButton, clickButton, normalButton, hoverSound, clickSound, function() {
     flee();
-  };
-  fleeMenu.appendChild(fleeButton);
-  let backButton = document.createElement("button");
-  backButton.innerText = "Back";
-  backButton.onclick = function () {
-    showMainMenu();
-  };
-  fleeMenu.appendChild(backButton);
+  });
+  fleeMenu.appendChild(fleeButton.element);
+  let backButton = new Button("Back", hoverButton, clickButton, normalButton, hoverSound, clickSound, showMainMenu);
+  fleeMenu.appendChild(backButton.element);
+  buttons.push(backButton);
 }
 
-function disableMenu() {
-  const menu = document.getElementById("main-menu");
-
-}
-
-function flee() {
+async function flee() {
+  await sleep(200);
   displayMessage(`${battle.opponent.name} wins!`);
   let fleeBanner = document.getElementById("game");
   fleeBanner.innerHTML = `<img src="GameOver.png">`;
@@ -644,11 +718,14 @@ function sleep(ms) {
 }
 
 function disableButtons() {
-  buttons.forEach(button => button.disabled = true);
+  buttons.forEach(button => {
+    button.disable()
+    console.log(button.disabled)
+  })
 }
 
 function enableButtons() {
-  buttons.forEach(button => button.disabled = false);
+  buttons.forEach(button => button.enable());
 }
 
 function startGame() {
@@ -667,15 +744,15 @@ document.getElementById("toggle-music").addEventListener("click", function() {
     }
 });
 
-document.getElementById("volume-slider").addEventListener("input", function() {
+document.getElementById("music-volume-slider").addEventListener("input", function() {
     music.volume = this.value;
 });
 
-let music = new Audio('battle-music.wav');
-
-let battle = null;
-let winner = null;
-let buttons = [];
+document.getElementById("effects-volume-slider").addEventListener("input", function() {
+    hoverSound.volume = this.value;
+    clickSound.volume = this.value;
+    attackSound.volume = this.value;
+});
 
 function main() {
   startGame();
@@ -695,7 +772,7 @@ function main() {
     escapeArtist,
     cerberusMaul,
   ]);
-  let terraptor = new Monster("Terraptor", "Earth", 300, 75, 50, [
+  let terraptor = new Monster("Terraptor", "Earth", 300, 50, 50, [
     sliceAndDice,
     earthquake,
     hardenedShell,

@@ -97,7 +97,7 @@
             width: 90px;
             height: 100px;
         }
-        .actions {
+/*        .actions {
             position: absolute;
             bottom: 140px;
             text-align: center;
@@ -107,11 +107,50 @@
             gap: 10px;
             width: 50%;
             z-index: 3
+        }  */
+        #main-menu {
+            position: absolute;
+            top: 73%;  /* adjust as needed */
+            left: 47%;  /* adjust as needed */
+            transform: translate(-50%, -50%);  /* centers the element */
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;  /* Adjust as needed to add space between the buttons */
+            width: 300px;  /* Adjust as needed */
+            z-index: 999;
         }
-        .actions button {
+        #main-menu > div {
+            position: relative;
+            width: 172px; /* Set this to the width of your buttons */
+            height: 40px; /* Set this to the height of your buttons */
+        }
+
+        #main-menu img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        #main-menu span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .actions > button:disabled {
+          pointer-events: none;
+        }
+/*        .actions button {
             padding: 10px;
-            background-color: #4CAF50; /* Green */
-            border: none;
+            background-color: #4CAF50;
+            border: 1px solid white;
             color: white;
             text-align: center;
             text-decoration: none;
@@ -124,18 +163,19 @@
         .actions button:hover {
             background-color: white; 
             color: black;
-            border: 2px solid #4CAF50;
+            border: 1px solid #4CAF50;
         }
         .actions button:disabled {
             background-color: #cccccc;
             color: #666666;
             cursor: not-allowed;
+            border: 1px solid lightgray;
         }
         .actions button:disabled:hover {
             background-color: #cccccc;
             color: #666666;
-            border: none;
-        }
+            border: 1px solid lightgray;
+        }*/
         #overlay {
             position: fixed; 
             display: flex;
@@ -154,15 +194,26 @@
             font-size: 20px; 
         }
         .audio-controls {
+            color: white;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            margin: 20px;
+            gap: 10px;
+        }
+        .slider {
             display: flex;
             justify-content: center;
             position: relative;
             margin: 20px;
         }
+        #music-slider {
+            gap: 58px;
+        }
     </style>
 </head>
 <body>
-     <div id="overlay">
+    <div id="overlay">
         <button id="start-button">Start Game</button>
     </div>
     <div id="game">
@@ -190,8 +241,8 @@
                 <p id="player2-name" style="font-size:18px; font-weight:bold; color:#560319; text-align:center; position:relative; margin: 0px; z-index:2">VINCENT</p>
                 <img src="Vincent.png" class="profile-img" alt="Player 2's profile">
             </div>
-            <div class="actions" id="main-menu">
-                <button id="attack-button">Attack</button>
+            <div id="main-menu">
+                <button id="attack-button" src="StraightButton.png">Attack</button>
                 <button id="switch-button">Switch</button>
                 <button id="item-button">Item</button>
                 <button id="flee-button">Flee</button>
@@ -216,7 +267,12 @@
         </div>
         <div class="audio-controls">
             <button id="toggle-music">Toggle Music</button>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+        </div>
+        <div class="audio-controls" id="music-slider">
+            Music<input type="range" id="music-volume-slider" min="0" max="1" step="0.01" value="1">
+        </div>
+        <div class="audio-controls">
+            Sound Effects<input type="range" id="effects-volume-slider" min="0" max="1" step="0.01" value="1">
         </div>
     </div>
     <script type="module" src="game.js"></script>
