@@ -36,7 +36,7 @@ const {
 
 
 class Button {
-  constructor(text, hoverImage, clickImage, normalImage, mouseoverSound, clickSound, action) {
+  constructor(text, hoverImage, clickImage, normalImage, mouseoverSound, clickSound, action, updateTextFunction) {
     this.element = document.createElement("div");
     this.element.className = 'actions';
 
@@ -44,15 +44,17 @@ class Button {
     this.imageElement.src = normalImage;
     this.element.appendChild(this.imageElement);
 
-    let span = document.createElement('span');
-    span.innerText = text;
-    this.element.appendChild(span);
+    this.textElement = document.createElement('span'); // changed this line
+    this.textElement.innerText = text;
+    this.element.appendChild(this.textElement);
+
+    this.updateTextFunction = updateTextFunction;
+    this.action = action;
 
     this.element.addEventListener("mouseover", function() {
       if (!this.disabled) {
         mouseoverSound.play();
         this.imageElement.src = hoverImage;
-        console.log(this);
       }
     }.bind(this));
 
@@ -68,7 +70,7 @@ class Button {
         this.imageElement.src = clickImage;
         await sleep(200);
         this.imageElement.src = normalImage;
-        action();
+        this.action();
       }
     }.bind(this));
 
@@ -83,6 +85,12 @@ class Button {
   enable() {
     this.disabled = false;
     this.imageElement.children[0].src = normalButton; // Reset the source to the normal button image
+  }
+
+  updateText() {
+    if (this.updateTextFunction) {
+      this.textElement.innerText = this.updateTextFunction();
+    }
   }
 }
 
@@ -552,15 +560,21 @@ function showAttackMenu() {
   // For each attack, create a button, add the onclick, and append it to the menu
   attacks.forEach((attack) => {
     let attackButton = new Button(`${attack.name}, ${attack.currentUsage}/${attack.maxUsage}`, hoverButton, clickButton, normalButton, hoverSound, attackSound, function() {
+      console.log("IS USABLE?" + attack.isUsable());
       if (attack.isUsable()) {
+        console.log("USING");
         attack.use();
+        buttons.forEach(button => button.updateText());
         disableButtons();
-        buttons.forEach(button => console.log(button.element.disabled));
+        console.log("USING");
         handleAttack(attack);
       } else {
         displayMessage("You can't use that move anymore.");
       }
-    });
+    },
+    function() {
+      return `${attack.name}, ${attack.currentUsage}/${attack.maxUsage}`;
+    })
     attackMenu.appendChild(attackButton.element);
     buttons.push(attackButton);
   });
@@ -578,10 +592,13 @@ function showSwitchMenu() {
   switchMenu.innerHTML = "";
   buttons = [];
   // For each attack, create a button, add the onclick, and append it to the menu
-  switchOptions.forEach((option) => {
-    let switchButton = new Button(`${option.name} ${option.currentHp}/${option.maxHp}`, hoverButton, clickButton, normalButton, hoverSound, clickSound, function() {
-      battle.handleSwitch(option);
-    })
+  switchOptions.forEach(async (option) => {
+    let switchButton = new Button(`${option.name} ${option.currentHp}/${option.maxHp}`, hoverButton, clickButton, normalButton, hoverSound, clickSound, async function() {
+      await battle.handleSwitch(option);
+    },
+    function() {
+      return `${option.name} ${option.currentHp}/${option.maxHp}`;
+    });
     switchMenu.appendChild(switchButton.element);
     buttons.push(switchButton);
   });
@@ -600,6 +617,10 @@ function showItemEffectMenu(item) {
   itemEffectOptions.forEach((option) => {
     let itemEffectButton = new Button(`${option.name} ${option.currentHp}/${option.maxHp}`, hoverButton, clickButton, normalButton, hoverSound, clickSound, function() {
       battle.useItem(item, option);
+      buttons.forEach(button => button.updateText());
+    },
+    function() {
+      return `${option.name} ${option.currentHp}/${option.maxHp}`;
     });
     itemEffectMenu.appendChild(itemEffectButton.element);
     buttons.push(itemEffectButton);
@@ -622,6 +643,9 @@ function showItemMenu() {
       } else {
         displayMessage("You don't have any more of that item.");
       }
+    },
+    function() {
+      return `${option.name}, ${option.number}`;
     });
     itemMenu.appendChild(itemButton.element);
     buttons.push(itemButton);
@@ -705,6 +729,7 @@ async function opponentMove() {
     await battle.handleMove(move);
     console.log("ABOUT TO SWITCH TURN")
     battle.switchTurn();
+    buttons.forEach(button => button.updateText());
   }
   return new Promise(resolve => {
     setTimeout(() => {

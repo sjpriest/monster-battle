@@ -1,0 +1,2 @@
+window.addEventListener("message",(function(a){if("fluent-pronunciation-playback"===a.data.action){var n="data:audio/x-wav;base64,"+a.data.data,t=document.getElementById("fluent-pronunciation-player");t.src=n,t.play()}}));
+//# sourceMappingURL=pronunciation.js.map
